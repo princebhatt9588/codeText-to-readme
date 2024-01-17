@@ -1,3 +1,81 @@
+### Instructions for Data Extraction and Text Analysis
+
+#### 1. Approach to the Solution:
+
+The provided code is a Jupyter Notebook script (`.ipynb`) that performs data extraction and text analysis on a list of URLs. Here's a breakdown of the key steps:
+
+- **Data Extraction:**
+  - The script reads a list of URLs from an Excel file (`Input.xlsx`).
+  - For each URL, it sends a request to the webpage and uses BeautifulSoup to extract the title and text content.
+  - The title and text are then saved to individual text files in a specified directory.
+
+- **Text Analysis:**
+  - The script loads a set of stop words, positive words, and negative words from predefined directories.
+  - It tokenizes the text files, removes stop words, and calculates various sentiment scores (positive score, negative score, polarity score, subjectivity score).
+  - Additionally, it measures various linguistic features such as average sentence length, percentage of complex words, Fog Index, word count, average word length, and counts of personal pronouns.
+
+- **Output:**
+  - The script creates a DataFrame (`output_df`) with the calculated scores.
+  - Rows with URL_IDs 44, 57, and 144 are dropped as these URLs resulted in a 404 error (page not found).
+  - The calculated scores are added to the DataFrame.
+  - The final DataFrame is saved as a CSV file (`Output_Data.csv`).
+
+#### 2. Running the .py File:
+
+To run the code as a Python script, you can follow these steps:
+
+1. **Set Up Environment:**
+   - Ensure you have Python installed on your system.
+
+2. **Install Dependencies:**
+   - Install the necessary Python packages using the following command:
+     ```
+     pip install pandas requests beautifulsoup4 nltk
+     ```
+
+3. **Prepare Directories:**
+   - Ensure that the required directories (`TitleText`, `StopWords`, `MasterDictionary`) are set up in the specified location on Google Drive or modify the code accordingly.
+
+4. **Download External Resources:**
+   - Download external resources (stop words, positive words, negative words) and place them in the corresponding directories.
+
+5. **Run the Script:**
+   - Save the provided code as a Python file (e.g., `text_analysis_script.py`).
+   - Open a terminal and navigate to the directory containing the script.
+   - Run the script using the following command:
+     ```
+     python text_analysis_script.py
+     ```
+
+6. **Check Output:**
+   - The script will generate an output CSV file (`Output_Data.csv`) containing the calculated scores.
+
+#### 3. Dependencies:
+
+Ensure that you have the following Python packages installed:
+
+- `pandas`
+- `requests`
+- `beautifulsoup4`
+- `nltk`
+
+You can install these dependencies using the `pip install` command mentioned in step 2.
+
+Additionally, the script relies on external resources such as stop words, positive words, and negative words. Make sure to download and place these files in the specified directories (`StopWords`, `MasterDictionary`) or adjust the code to use the correct paths.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Research Question 1:
 ## How can Natural Language Processing (NLP) techniques be effectively integrated into recommender systems to interpret and respond to user preferences expressed in natural language?
 
