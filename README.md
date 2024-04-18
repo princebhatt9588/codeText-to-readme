@@ -1,39 +1,71 @@
-### Research Methodology for PPT
+### Title: Instructions for Data Extraction and Text Analysis
 
-The methodology of this research integrates a sequence of analytical and procedural steps designed to evaluate and enhance the personalization of recommender systems through NLP. The process encompasses data acquisition, preprocessing, model development, training, evaluation, and analysis. Key points and results derived from the application of the methodology on the Amazon Consumer Reviews dataset are highlighted below.
+---
 
-**Key Points:**
+### 1. Approach to the Solution
 
-1. **Data Acquisition and Preprocessing**:
-   - Acquired Amazon Consumer Reviews dataset and conducted thorough preprocessing, including text normalization, tokenization, and sentiment analysis.
-   - Extracted critical features such as user ratings, review texts, product IDs, and sentiment scores to feed into the models.
+The script orchestrates a sequence of operations geared towards data extraction from web pages and subsequent text analysis, pulling data from a predefined list of URLs stored in an Excel file. Here’s a breakdown of the script's operations:
 
-2. **Model Implementation**:
-   - Implemented three models: SVD Collaborative Filtering, DeepNCF_NLP, and RNN with Attention and Sentiment Analysis.
-   - Each model aimed to leverage user reviews and ratings to predict product recommendations, incorporating both traditional machine learning and deep learning techniques.
+- **Mounting Google Drive**: To seamlessly access files stored on Google Drive directly from Google Colab, the script initiates by mounting the Google Drive. This is crucial for reading the input Excel file and storing the output directly onto the Drive.
 
-3. **Training and Evaluation**:
-   - Models were trained on a split dataset, with 80% for training and 20% for testing, ensuring a rigorous evaluation of performance.
-   - Employed metrics such as RMSE (Root Mean Square Error), accuracy, and precision to assess model performance.
+- **Dependency Installation**: It installs essential Python packages such as `pandas` for data manipulation, and `nltk` for natural language tasks, ensuring all necessary libraries are available for the script to execute effectively.
 
-**Results**:
+- **Data Reading and Web Scraping**: The script fetches URLs from an Excel file and utilizes `requests` and `BeautifulSoup` to scrape web content from each URL. It meticulously handles HTTP errors, especially focusing on the 404 errors to omit URLs that are not found.
 
-- **SVD Collaborative Filtering**:
-  - Achieved an RMSE of 0.827, accuracy of 91.68%, and precision of 91.84%.
-  - Demonstrated strong baseline performance, emphasizing the value of collaborative filtering techniques.
+- **Text Processing**: Post scraping, the script extracts text and saves it into text files. It processes this text further by tokenizing, removing stopwords, and conducting sentiment analysis using pre-loaded lists of positive and negative words.
 
-- **DeepNCF_NLP Model**:
-  - Exhibited remarkable accuracy (89.80%) and precision (89.79%), with a significantly lower RMSE of 0.319.
-  - Highlighted the efficacy of integrating deep learning with NLP for understanding user preferences.
+- **Analysis**: Various metrics such as positive scores, negative scores, polarity, subjectivity, sentence lengths, and syllable counts are calculated. These metrics are designed to provide insights into the textual complexity and sentiment.
 
-- **RNN with Attention and Sentiment Analysis**:
-  - Showed an RMSE of 0.696, indicating high prediction accuracy in understanding contextual nuances and sentiments within reviews.
-  - Validated the importance of attention mechanisms in focusing on relevant textual elements for improved recommendations.
+- **Output**:
+  - The script creates a DataFrame (`output_df`) populated with the calculated scores.
+  - It removes rows with `URL_IDs` that resulted in a 404 error, ensuring data integrity.
+  - All calculated metrics are incorporated into the DataFrame.
+  - The resultant DataFrame is then saved as a CSV file named `Output_Data.csv` on Google Drive.
 
-**Conclusions**:
+### 2. How to Run the .py File to Generate Output
 
-- The integration of NLP techniques significantly enhances the personalization and accuracy of recommender systems.
-- DeepNCF_NLP and RNN models, with their focus on textual analysis and sentiment, outperform traditional collaborative filtering in understanding user preferences.
-- Future work may explore more complex NLP and deep learning architectures, further refining recommendation personalization.
+Running this script is straightforward if you follow these steps:
 
-This research methodology underscores the potential of NLP in revolutionizing recommender systems, paving the way for more sophisticated, user-centric recommendation algorithms.
+1. **Prepare Your Environment**:
+   - Ensure that your environment supports Python and has internet access. For local execution, Python should be installed on your system.
+
+2. **Save the Script**:
+   - Store the code into a new Python file, preferably named `script.py`.
+
+3. **Set Up Google Drive (if using locally)**:
+   - If you are running the script locally but want to use Google Drive for file storage, configure Google Drive mounting with tools like `google-drive-ocamlfuse` for Linux or Google's `Backup and Sync` for Windows/Mac.
+
+4. **Install Dependencies**:
+   - Install all the required packages by running the following command:
+     ```bash
+     pip install pandas==1.3.3 nltk requests beautifulsoup4 xlrd
+     ```
+
+5. **Run the Script**:
+   - Launch the script from your command line or terminal:
+     ```bash
+     python script.py
+     ```
+
+6. **Check Outputs**:
+   - After execution, verify the output directory on your Google Drive or local setup for the CSV file.
+
+### 3. Include All Dependencies Required
+
+The script depends on multiple external Python libraries. Make sure the following dependencies are installed:
+
+- **pandas**: For DataFrame operations and Excel file interaction.
+- **nltk**: For processing text, including tokenization and stopwords management.
+- **requests**: To fetch web pages.
+- **beautifulsoup4**: For parsing HTML and extracting data.
+- **xlrd**: To read data from Excel files.
+
+Installation command:
+```bash
+pip install pandas==1.3.3 nltk requests beautifulsoup4 xlrd
+```
+
+### Additional Notes
+
+- Ensure that the paths to the input and output files are correctly set up according to your environment, whether it's local or on Google Drive.
+- Regularly update the dependencies to ensure the script's compatibility and security.
