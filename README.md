@@ -1,222 +1,259 @@
-Databricks Medallion Architecture: A Data Engineer's Perspective
+Data Warehouse and Databricks Medallion Architecture Documentation
 
-The Medallion Architecture in Databricks is a framework for organizing data into three layers: Bronze, Silver, and Gold, which ensures data quality, scalability, and reusability. It is especially useful for implementing modern data lakes or lakehouses, enabling efficient ETL pipelines, and driving data-driven decision-making. This documentation provides an overview, along with practical examples, focusing on the Bronze and Silver layers.
+This documentation provides a professional and comprehensive guide to Data Warehouse Development/Deployment and the Databricks Medallion Architecture. It is designed for new joiners to understand the flow of data, layers, and their purposes in a Data Warehouse or Databricks ecosystem.
 
 
 ---
 
-1. Overview of the Medallion Architecture
+1. Data Warehouse Structure
 
-Bronze Layer:
+Source Layer
 
-Raw, unprocessed data ingested from multiple sources.
+Purpose: Collect data from various sources.
 
-Minimal transformations, preserving the data in its original form.
+Data Characteristics: Raw, structured, semi-structured, or unstructured, often in string format.
 
-Acts as the system of record.
+Example:
+Data from sources like APIs, databases, IoT devices, or flat files is collected in its original format, without transformation.
 
 
-Silver Layer:
+Import Layer
 
-Cleansed and transformed data from the Bronze layer.
+Purpose:
 
-Deduplicated, normalized, and enriched for business use cases.
+Ingest daily data from the source into the system.
 
-Enables efficient querying and serves as the foundation for analytical models.
+Maintain the raw format for integrity and audit purposes.
+
+
+Process:
+Data is ingested directly without initial processing.
+
+Example:
+| Date       | Transaction_ID | Customer_Name | Transaction_Amount | Status  |
+|------------|----------------|---------------|---------------------|---------|
+| 2024-11-20 | TXN123         | John Doe      | "200"              | "Valid" |
+
+
+Stage Layer
+
+Purpose:
+
+Transform data into the required structure.
+
+Remove outliers and handle null or invalid values.
+
+
+Process:
+
+Data cleaning: Remove unnecessary or inconsistent data.
+
+Data typing: Convert string data to appropriate types (e.g., integer, float, datetime).
+
+
+Example Transformation:
+
+Remove invalid rows (e.g., rows with "null" Transaction_Amount).
+
+Convert Transaction_Amount from string to float.
+
+
+Before Stage Layer:
+| Date       | Transaction_ID | Customer_Name | Transaction_Amount | Status  |
+|------------|----------------|---------------|---------------------|---------|
+| 2024-11-20 | TXN124         | Jane Smith    | "null"             | Invalid |
+
+After Stage Layer:
+| Date       | Transaction_ID | Customer_Name | Transaction_Amount | Status  |
+|------------|----------------|---------------|---------------------|---------|
+| 2024-11-20 | TXN123         | John Doe      | 200.0              | Valid   |
+
+
+Stage Ria (Production Stage)
+
+Purpose: Store cumulative data (historical + daily).
+
+Process: Append daily cleaned and transformed data from the Stage Layer into the cumulative dataset.
+
+Example:
+Stage Layer (Today’s Data):
+| Date       | Transaction_ID | Customer_Name | Transaction_Amount | Status  |
+|------------|----------------|---------------|---------------------|---------|
+| 2024-11-20 | TXN125         | Mike Ross     | 300.0              | Valid   |
+
+Stage Ria (Cumulative Data):
+| Date       | Transaction_ID | Customer_Name | Transaction_Amount | Status  |
+|------------|----------------|---------------|---------------------|---------|
+| 2024-11-19 | TXN124         | Jane Smith    | 150.0              | Valid   |
+| 2024-11-20 | TXN125         | Mike Ross     | 300.0              | Valid   |
+
+
+
+---
+
+2. Databricks Medallion Architecture
+
+The Databricks Medallion Architecture is a modern data lakehouse structure with three layers: Bronze, Silver, and Gold. It ensures scalability, quality, and usability of data. Below is a detailed explanation of each layer with examples.
+
+
+---
+
+Datalake (Raw Zone)
+
+Purpose:
+
+Store raw data from source systems in its original format.
+
+Handle structured, semi-structured, or unstructured data.
+
+
+Analogy:
+Imagine a Data Lake as a large warehouse where you dump all boxes of goods from different suppliers.
+
+
+
+---
+
+Bronze Layer
+
+Purpose:
+
+Serve as a landing zone for raw, unprocessed data.
+
+Maintain raw data without any transformations.
+
+
+Key Characteristics:
+
+No schema enforcement.
+
+Ideal for auditing and as a system of record.
+
+
+Example:
+Raw logs from an IoT device:
+
+{"sensor_id": "123", "temp": "25C", "timestamp": "2024-11-20T12:00:00Z"}
+{"sensor_id": "124", "temp": "null", "timestamp": "2024-11-20T12:05:00Z"}
+
+Analogy:
+The Bronze Layer is like an area in a warehouse where you unload boxes without organizing them, keeping their original packaging intact.
+
+
+
+---
+
+Silver Layer
+
+Purpose:
+
+Cleanse, conform, and standardize data from the Bronze Layer.
+
+Enable self-service analytics and ad-hoc reporting.
+
+
+Process:
+
+Deduplicate records.
+
+Remove invalid rows and standardize formats.
+
+Join data with other sources (if needed).
+
+
+Example Transformation:
+Bronze Layer Data:
+
+{"sensor_id": "123", "temp": "25C", "timestamp": "2024-11-20T12:00:00Z"}
+{"sensor_id": "124", "temp": "null", "timestamp": "2024-11-20T12:05:00Z"}
+
+Silver Layer Data:
+| Sensor_ID | Temperature (C) | Timestamp           |
+|-----------|------------------|---------------------|
+| 123       | 25.0             | 2024-11-20 12:00:00 |
+
+Analogy:
+In the Silver Layer, you open the boxes from the warehouse, remove defective items, and organize the rest for easy access.
+
+
+
+---
+
+Gold Layer
+
+Purpose:
+
+Provide aggregated, business-ready data for reporting and dashboards.
+
+Used by BI teams for insights and advanced analytics.
+
+
+Example:
+Silver Layer Data (Cleaned IoT data):
+| Sensor_ID | Temperature (C) | Timestamp           |
+|-----------|------------------|---------------------|
+| 123       | 25.0             | 2024-11-20 12:00:00 |
+
+Gold Layer Data (Average Temperature Report):
+| Date       | Average Temperature (C) |
+|------------|--------------------------|
+| 2024-11-20 | 25.0                    |
+
+Analogy:
+The Gold Layer is like assembling a final product using the organized goods, ready for distribution or sale.
+
+
+
+---
+
+3. Practical Workflow Integration
+
+1. Ingest Daily Data:
+Data is ingested from multiple sources (e.g., databases, IoT sensors, APIs) into the Datalake or Import Layer.
+
+
+2. Raw Landing in Bronze:
+Data is moved to the Bronze Layer for storage without processing.
+
+
+3. Cleaning in Silver:
+Data is cleaned, transformed, and standardized for analytics or downstream usage.
+
+
+4. Aggregation in Gold:
+Data is aggregated into business-ready datasets for reporting in tools like Power BI or Tableau.
+
+
+
+
+---
+
+4. Best Practices
+
+Import/Bronze Layer:
+
+Always preserve raw data for reprocessing and auditing.
+
+Use Delta Lake for ACID transactions.
+
+
+Stage/Silver Layer:
+
+Deduplicate data and enforce schema validation.
+
+Optimize data partitions for faster query performance.
 
 
 Gold Layer:
 
-Aggregated, business-ready data.
+Aggregate data based on business needs.
 
-Optimized for reporting, dashboards, and machine learning workflows.
-
-
+Maintain consistent formats for reporting.
 
 
----
-
-2. Data Engineer's Role
-
-Bronze Layer Responsibilities
-
-Data Ingestion:
-
-Extract data from diverse sources (e.g., APIs, databases, IoT devices).
-
-Tools: Databricks Autoloader, Kafka, or Azure Data Factory.
-
-
-Schema Handling:
-
-Store semi-structured (e.g., JSON, Parquet) and unstructured data.
-
-Maintain schema evolution for data flexibility.
-
-
-Storage Format:
-
-Use Delta Lake format for ACID transactions and versioning.
-
-
-
-Example: Ingesting Data into the Bronze Layer
-
-from pyspark.sql.functions import current_timestamp
-
-# Read data from Kafka
-bronze_df = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "server:port") \
-    .option("subscribe", "topic") \
-    .load()
-
-# Add metadata and write to Delta table
-bronze_df.withColumn("ingest_time", current_timestamp()) \
-    .writeStream \
-    .format("delta") \
-    .option("checkpointLocation", "/bronze/checkpoints") \
-    .start("/bronze/data")
-
-Silver Layer Responsibilities
-
-Data Cleaning:
-
-Remove duplicates, filter invalid records, and standardize formats.
-
-
-Transformation:
-
-Apply business rules or enrich data with lookups.
-
-
-Validation:
-
-Ensure data consistency using constraints or expectations (e.g., via Databricks Delta Expectations).
-
-
-Optimization:
-
-Optimize data for downstream consumption (partitioning, indexing).
-
-
-
-Example: Transforming Data in the Silver Layer
-
-# Read data from Bronze Layer
-bronze_data = spark.read.format("delta").load("/bronze/data")
-
-# Perform cleaning and transformation
-silver_data = bronze_data.filter("value IS NOT NULL") \
-    .dropDuplicates() \
-    .withColumn("processed_time", current_timestamp())
-
-# Write to Silver Layer
-silver_data.write.format("delta").mode("overwrite").save("/silver/data")
 
 
 ---
 
-3. Practical Example Workflow
-
-Use Case: Building a Customer 360 View
-
-1. Bronze Layer:
-
-Ingest customer data from CRM and support ticketing systems in raw JSON format.
-
-Example file:
-
-{"customer_id": "123", "name": "John", "ticket": null}
-
-
-
-2. Silver Layer:
-
-Cleanse data:
-
-Remove nulls.
-
-Standardize formats (e.g., date formats, case normalization).
-
-
-Enrich with additional details, such as joining loyalty program data.
-
-Silver Output:
-
-+-------------+---------+-----------------+------------+
-| customer_id |  name   |    email        | ticket_cnt |
-+-------------+---------+-----------------+------------+
-| 123         | John    | john@example.com| 5          |
-+-------------+---------+-----------------+------------+
-
-
-
-3. Gold Layer:
-
-Aggregate customer data for insights:
-
-Total purchases, average ticket resolution time, etc.
-
-
-
-
-
-
----
-
-4. Visual Representation
-
-Bronze Layer: Ingestion
-
-
-
-Silver Layer: Cleansing and Enrichment
-
-
-
-End-to-End Medallion Workflow
-
-
-
-
----
-
-5. Best Practices
-
-Bronze Layer:
-
-Preserve raw data for auditing.
-
-Ensure idempotent data ingestion to handle reprocessing scenarios.
-
-
-Silver Layer:
-
-Use Delta Lake optimizations like Z-ordering for large datasets.
-
-Implement robust data quality checks with tools like Great Expectations or custom validation.
-
-
-General:
-
-Leverage Databricks notebooks for collaborative ETL workflows.
-
-Use CI/CD pipelines for deployment and monitoring.
-
-
-
-
----
-
-6. Tools and References
-
-Databricks Delta Lake: Delta Lake Documentation
-
-Databricks Notebooks: Collaborative Data Science
-
-Great Expectations: Data Quality Framework
-
-
-This structure enables Data Engineers to build scalable, reliable, and efficient data pipelines while ensuring high data quality and operational flexibility.
+This documentation ensures a seamless understanding of Data Warehouse and Databricks Medallion architecture, allowing new joiners to align with organizational standards.
 
