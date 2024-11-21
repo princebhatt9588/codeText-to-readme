@@ -1,61 +1,91 @@
 
+#### 1. Processing Ledger Transactions to Identify Inactivity and Sessions
+ - **Dropping Existing Table**: If the table `CZ_RG.Stage_F_Ledger_Player_Session` exists, it is dropped.
+ - **Creating Table `CZ_RG.Stage_F_Ledger_Player_Session`**:
+ - **Purpose**: To identify periods of inactivity and session starts within the transactions.
+ - **Source**: Data is selected from `CZ_RG.F_Ledger_Txn_Temp`.
+ - **Logic**:
+ - **Lag Function**: Uses the `LAG` window function to get the previous transaction time for each player on the same day.
+ - **Inactivity Flag**: Determines if there is inactivity based on the difference between the current and previous transaction times, compared to the `Cut_Off_Duration`.
+ - **Conditions**: Filters to include only 'Bet' transactions with specific statuses ('bet', 'bonus_bet').
 
-### Analysis of Base Proc Query
+#### 2. Differentiating Between Late Night and Day Play
+ - **Dropping Existing Table**: If the table `CZ_RG.Stage_F_Player_Session` exists, it is dropped.
+ - **Creating Table `CZ_RG.Stage_F_Player_Session`**:
+ - **Purpose**: To differentiate between late-night play (midnight to 6 AM) and day play (6 AM to 11 PM).
+ - **Source**: Data is selected from `CZ_RG.Stage_F_Ledger_Player_Session`.
+ - **Logic**:
+ - **Late Night Play**: Identifies sessions where transactions occur between midnight and 5 AM.
+ - **Day Play**: Identifies sessions where transactions occur between 6 AM and 11 PM.
+ - **Session ID**: Generates a unique session ID based on player ID, date, play type (late night or day), and inactivity count.
+ - **Conditions**: Filters transactions based on the hour of the day.
 
-#### 1. Initial Setup and Logging
- - **Initialization**: The stored procedure `[CZ_RG].[Refresh_RG_F_Ledger_Session]` begins by declaring the runtime and logging the start time into the `MAINTENANCE.Daily_Proc_Info_CZ` table.
- - **Parameters**: The procedure accepts three parameters: `@from_Date`, `@to_Date`, and `@cutOffDurationSeconds`.
+#### 3. Inserting Player Sessions into Permanent Table
+ - **Transaction Management**: Begins a transaction to ensure data integrity.
+ - **Deleting Existing Data**: Deletes existing player sessions for the specified date range in `CZ_RG.F_Player_Session`.
+ - **Inserting New Data**:
+ - **Source**: Data is selected from `CZ_RG.Stage_F_Player_Session`.
+ - **Logic**:
+ - **Session Duration**: Calculates session duration as the difference between session start and end times.
+ - **Cut-Off Duration**: Uses the `Cut_Off_Duration` parameter for session duration if it is zero.
+ - **Late Night Play Flag**: Indicates if the session includes late-night play.
+ - **Conditions**: Inserts data within the specified date range.
 
-#### 2. Temporary Table Preparation
- - **Dropping Existing Temporary Table**: If a temporary table `#F_Ledger_Txn` exists, it is dropped.
- - **Creating Temporary Table `#F_Ledger_Txn`**:
- - **Purpose**: This table is created to store ledger transactions within the specified date range.
- - **Joins**:
- - `CZ_presentation.FactledgerTransactions`: Main source of ledger transactions.
- - `CZ_presentation_views.DimPlayer`: To join player details using `whPlayerID`.
- - `prod_views.dim_player_CZ`: To fetch additional player information using `username`.
- - **Conditions**: Filters transactions based on `CentralTransactionDatetime` falling within the specified date range (`@from_Date` to `@to_Date`).
+#### 4. Preparing Network Table
+ - **Dropping Existing Temporary Table**: If the temporary table `#Networks` exists, it is dropped.
+ - **Creating Temporary Table `#Networks`**:
+ - **Purpose**: To store distinct network codes and names, excluding specific portal entries.
+ - **Source**: Data is selected from `[CZ_DER_ARCHIVE].[NETWORKS]`.
 
-#### 3. Timezone Adjustment Table
- - **Dropping Existing Temporary Table**: If a temporary table `#temp_vwDSTTimeZone` exists, it is dropped.
- - **Creating Temporary Table `#temp_vwDSTTimeZone`**:
- - **Purpose**: This table stores timezone adjustments to convert transaction times to local times.
- - **Source**: Data is fetched from `Audit.vwDSTTimeZone` for the 'Central' timezone.
+#### 5. Preparing Bet Type Table
+ - **Dropping Existing Temporary Table**: If the temporary table `#Cliso` exists, it is dropped.
+ - **Creating Temporary Table `#Cliso`**:
+ - **Purpose**: To store bet type information.
+ - **Source**: Data is selected from `CZ_RG.Vw_NVP_Tab_Sazenky` where the ticket code matches those in `CZ_RG.F_Ledger_Txn_Temp`.
 
-#### 4. Processing Transactions
- - **Dropping Existing Table**: If the table `CZ_RG.F_Ledger_Txn_Temp` exists, it is dropped.
- - **Creating Table `CZ_RG.F_Ledger_Txn_Temp`**:
- - **Purpose**: To store processed transactions with local time adjustments.
- - **Source**: Data is selected from `#F_Ledger_Txn` with additional calculations and joins:
- - **Timezone Adjustment**: Uses `#temp_vwDSTTimeZone` to adjust `Central_Transaction_Datetime` to local time.
- - **Additional Fields**: Calculates local transaction date, minute ID, and a cut-off duration.
- - **Conditions**: Filters transactions based on `Local_Transaction_Date` falling within the specified date range (`@from_Date` to `@to_Date`).
+### Summary of Logic and Terms in Query 2
 
-### Summary of Logic and Terms in Query 1
+1. **Identifying Inactivity and Sessions**:
+ - **Table Created**: `CZ_RG.Stage_F_Ledger_Player_Session`.
+ - **Tables Used**: `CZ_RG.F_Ledger_Txn_Temp`.
+ - **Logic**:
+ - **Lag Function**: Identifies previous transaction times.
+ - **Inactivity Flag**: Marks periods of inactivity based on `Cut_Off_Duration`.
+ - **Conditions**: Filters for 'Bet' transactions with specific statuses.
 
-1. **Initialization**:
- - Logs the start time of the procedure.
+2. **Differentiating Late Night and Day Play**:
+ - **Table Created**: `CZ_RG.Stage_F_Player_Session`.
+ - **Tables Used**: `CZ_RG.Stage_F_Ledger_Player_Session`.
+ - **Logic**:
+ - **Late Night Play**: Transactions between midnight and 5 AM.
+ - **Day Play**: Transactions between 6 AM and 11 PM.
+ - **Session ID**: Unique ID based on player ID, date, play type, and inactivity count.
+ - **Conditions**: Filters based on transaction times.
 
-2. **Temporary Table for Ledger Transactions**:
- - **Tables Joined**: `FactledgerTransactions`, `DimPlayer`, `dim_player_CZ`.
- - **Purpose**: To collect and store detailed ledger transactions.
- - **Conditions**: Filters transactions by date range.
+3. **Inserting Player Sessions**:
+ - **Permanent Table**: `CZ_RG.F_Player_Session`.
+ - **Source Table**: `CZ_RG.Stage_F_Player_Session`.
+ - **Logic**:
+ - **Session Duration**: Calculated from session start and end times.
+ - **Cut-Off Duration**: Used if session duration is zero.
+ - **Late Night Play Flag**: Indicates late-night play.
+ - **Conditions**: Inserts data within the specified date range.
 
-3. **Timezone Adjustment Table**:
- - **Table Used**: `Audit.vwDSTTimeZone`.
- - **Purpose**: To adjust transaction times to local time.
+4. **Preparing Network Table**:
+ - **Temporary Table**: `#Networks`.
+ - **Source Table**: `[CZ_DER_ARCHIVE].[NETWORKS]`.
+ - **Logic**: Excludes specific portal entries.
 
-4. **Processed Transactions Table**:
- - **Tables Used**: `#F_Ledger_Txn`, `#temp_vwDSTTimeZone`.
- - **Purpose**: To store transactions with local time adjustments and additional calculated fields.
- - **Conditions**: Filters transactions by local transaction date.
+5. **Preparing Bet Type Table**:
+ - **Temporary Table**: `#Cliso`.
+ - **Source Table**: `CZ_RG.Vw_NVP_Tab_Sazenky`.
+ - **Logic**: Matches ticket codes from `CZ_RG.F_Ledger_Txn_Temp`.
 
 ### Key Points:
- - **Joins**: Multiple tables are joined to gather detailed transaction data and player information.
- - **Conditions**: Date range filters are applied to ensure only relevant transactions are processed.
+ - **Joins**: Multiple tables are joined to gather detailed transaction data, player information, and bet types.
+ - **Conditions**: Filters based on transaction statuses, times, and date ranges.
  - **Terms**:
- - **Central_Transaction_Datetime**: Original transaction time.
- - **Local_Transaction_Datetime**: Adjusted transaction time based on timezone.
- - **Cut_Off_Duration**: Threshold for identifying session breaks.
-
-This analysis should provide a clear understanding of the logic and flow within Query 1 of the stored procedure. We'll continue with Query 2 and Query 3 similarly, breaking them down in detail.
+ - **Inactivity Flag**: Marks periods of inactivity based on transaction time differences.
+ - **Late Night Play**: Transactions between midnight and 5 AM.
+ - **Session ID**: Unique identifier for player sessions.
+ - **Cut-Off Duration**: Threshold for identifying session breaks.
