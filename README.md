@@ -1,29 +1,32 @@
-Yes, the **Central_Transaction_Datetime** is indeed converted into **Local_Transaction_Datetime** during the process. Here is a detailed explanation based on the provided details:
+The time mentioned in the context of differentiating between late-night play and day play for the table `CZ_RG.Stage_F_Player_Session` refers to **local time**. Here's a detailed explanation based on the provided details:
 
-## Conversion of Central Transaction Time to Local Time
+## Differentiating Between Late Night and Day Play
 
-### Process Overview
- 1. **Temporary Table for Ledger Transactions**:
- - Transaction data is initially collected with the central transaction times (Central_Transaction_Datetime).
+### Table Created
+ - **Table**: CZ_RG.Stage_F_Player_Session
 
-2. **Timezone Adjustment Table**:
- - The table `Audit.vwDSTTimeZone` is used specifically for adjusting transaction times to the local time.
+### Purpose
+ - **To differentiate between late-night play** (midnight to 6 AM) and **day play** (6 AM to 11 PM)
 
-3. **Processed Transactions Table**:
- - The tables `#F_Ledger_Txn` and `#temp_vwDSTTimeZone` are used to store transactions with local time adjustments.
- - **Fields Included**: All fields from `#F_Ledger_Txn` plus calculated fields for local transaction date, minute IDs, and cut-off duration.
+### Explanation
+ - The differentiation between late-night play and day play is based on **local transaction times**. This inference is supported by the following points:
 
-### Logic for Time Conversion
- - **Timezone Adjustment**:
- - The logic involves adjusting the `Central_Transaction_Datetime` to `Local_Transaction_Datetime` using the data from the timezone adjustment table `Audit.vwDSTTimeZone`.
- - This ensures that transaction times reflect the local time zone of the player, allowing for accurate tracking and analysis of player activity based on their local time.
+1. **Timezone Adjustment**:
+ - Prior to this step, the transaction times are adjusted from **Central_Transaction_Datetime** to **Local_Transaction_Datetime** using the `Audit.vwDSTTimeZone` table.
+ - This adjustment ensures that all subsequent processing, including the differentiation between late-night and day play, is based on the local time zone of the player.
+
+2. **Processed Transactions Table**:
+ - The processed transactions table contains the **Local_Transaction_Datetime**, which includes fields reflecting the local transaction date and time.
+
+3. **Logic Application**:
+ - The logic for differentiating late-night play (from midnight to 6 AM) and day play (from 6 AM to 11 PM) is applied to the local transaction times. This allows for accurate categorization based on the player's actual local time.
 
 ### Conclusion
- - **Yes**, the central transaction time (Central_Transaction_Datetime) is converted to local time (Local_Transaction_Datetime) as part of the processing logic. This adjustment is crucial for accurate session tracking, identifying inactivity periods, and differentiating between late-night and day play.
+ - The time mentioned for differentiating between late-night play (midnight to 6 AM) and day play (6 AM to 11 PM) in the creation of the table `CZ_RG.Stage_F_Player_Session` is **local transaction time**.
 
 ## Keyword Explanation
 
-### Transaction
- - **Transaction**: An atomic operation where some information is exchanged and treated as a single unit.
+### Local_Transaction_Datetime
+ - **Local_Transaction_Datetime**: Adjusted transaction time based on the player's local timezone, providing an accurate representation of when transactions occurred according to the local time.
 
-This time conversion ensures that all subsequent analyses and reports are based on the local transaction times, providing a more accurate and relevant understanding of player behavior and activity patterns.
+By using local transaction times, the system ensures that the categorization of play periods is relevant and accurate for each player's specific time zone, thereby enhancing the reliability and usefulness of the analysis.
