@@ -1,105 +1,23 @@
-# Comprehensive Summary of Logic and Terms
+**Cut-Off Duration** is a predefined time threshold used to identify gaps or breaks in player activity, particularly in their transaction sessions. Here's a detailed explanation of its usage and purpose:
 
-## Initialization
- - **Logs the start time** of the procedure.
+## Cut-Off Duration
 
-## Temporary Table for Ledger Transactions
- - **Tables Joined**: FactledgerTransactions, DimPlayer, dim_player_CZ.
- - **Purpose**: To collect and store detailed ledger transactions.
- - **Fields Included**: 
- - Player IDs
- - Transaction IDs
- - Game type
- - Transaction codes
- - Network code
- - Transaction datetime
- - Transaction amounts
- - **Conditions**: Filters transactions by date range.
+### Definition
+ - **Cut-Off Duration**: A predefined time threshold used to determine periods of inactivity between transactions.
 
-## Timezone Adjustment Table
- - **Table Used**: Audit.vwDSTTimeZone.
- - **Purpose**: To adjust transaction times to local time.
- - **Fields Included**: All fields from Audit.vwDSTTimeZone.
+### Usage
+ - **Inactivity Flag**: Transactions are marked with an inactivity flag if the time difference between consecutive transactions exceeds the Cut-Off Duration. This helps in identifying gaps or breaks in player activity.
+ - **Session Identification**: It is used to segment player activities into distinct sessions. If the time gap between two transactions surpasses the Cut-Off Duration, it signifies the end of one session and the beginning of another.
+ - **Session Duration Calculation**: In cases where the duration of a session is zero, the Cut-Off Duration might be used to assign a minimum session length, ensuring that even short or inactive sessions are accounted for.
 
-## Processed Transactions Table
- - **Tables Used**: #F_Ledger_Txn, #temp_vwDSTTimeZone.
- - **Purpose**: To store transactions with local time adjustments and additional calculated fields.
- - **Fields Included**: 
- - All fields from #F_Ledger_Txn
- - Calculated fields for local transaction date
- - Minute IDs
- - Cut-off duration
+### Purpose
+ - **Accurate Session Tracking**: By identifying and flagging inactivity periods, the system can accurately track when a player starts and ends a session, even if there are long pauses between transactions.
+ - **Behavior Analysis**: It helps in analyzing player behavior by distinguishing between continuous play sessions and breaks. This is particularly useful for understanding patterns in player engagement and activity.
+ - **Data Filtering**: Ensures that only relevant transactions within active periods are analyzed, improving the accuracy of reports and insights derived from the data.
 
-## Logic
- - **Timezone Adjustment**: Adjusts Central_Transaction_Datetime to Local_Transaction_Datetime.
- - **Calculations**: Adds minute IDs and local transaction date fields.
- - **Conditions**: Filters transactions by local transaction date.
+### Reason for Implementation
+ - **Consistency in Data**: Ensures that sessions are consistently defined and tracked, which is crucial for reliable analysis and reporting.
+ - **Enhanced Insights**: Provides better insights into player behavior, such as the frequency and duration of their play sessions, which can be used for targeted marketing, responsible gaming measures, and improving user experience.
+ - **Operational Efficiency**: Helps in filtering out irrelevant data and focusing on meaningful interactions, which can streamline operations and data processing.
 
-## Identifying Inactivity and Sessions
- - **Table Created**: CZ_RG.Stage_F_Ledger_Player_Session.
- - **Tables Used**: CZ_RG.F_Ledger_Txn_Temp.
- - **Lag Function**: Identifies previous transaction times.
- - **Inactivity Flag**: Marks periods of inactivity based on Cut_Off_Duration.
- - **Conditions**: Filters for 'Bet' transactions with specific statuses.
-
-## Differentiating Late Night and Day Play
- - **Table Created**: CZ_RG.Stage_F_Player_Session.
- - **Tables Used**: CZ_RG.Stage_F_Ledger_Player_Session.
- - **Late Night Play**: Transactions between midnight and 5 AM.
- - **Day Play**: Transactions between 6 AM and 11 PM.
- - **Session ID**: Unique ID based on player ID, date, play type, and inactivity count.
- - **Conditions**: Filters based on transaction times.
-
-## Inserting Player Sessions
- - **Permanent Table**: CZ_RG.F_Player_Session.
- - **Source Table**: CZ_RG.Stage_F_Player_Session.
- - **Session Duration**: Calculated from session start and end times.
- - **Cut-Off Duration**: Used if session duration is zero.
- - **Late Night Play Flag**: Indicates late-night play.
- - **Conditions**: Inserts data within the specified date range.
-
-## Preparing Network Table
- - **Temporary Table**: #Networks.
- - **Source Table**: [CZ_DER_ARCHIVE].[NETWORKS].
- - **Logic**: Excludes specific portal entries.
-
-## Preparing Bet Type Table
- - **Temporary Table**: #Cliso.
- - **Source Table**: CZ_RG.Vw_NVP_Tab_Sazenky.
- - **Logic**: Matches ticket codes from CZ_RG.F_Ledger_Txn_Temp.
-
-## Key Points
- - **Joins**: Multiple tables are joined to gather detailed transaction data, player information, and bet types.
- - **Conditions**: Filters based on transaction statuses, times, and date ranges.
- - **Inactivity Flag**: Marks periods of inactivity based on transaction time differences.
- - **Late Night Play**: Transactions between midnight and 5 AM.
- - **Session ID**: Unique identifier for player sessions.
- - **Cut-Off Duration**: Threshold for identifying session breaks.
-
-## Terms
- - **Central_Transaction_Datetime**: Original transaction time.
- - **Local_Transaction_Datetime**: Adjusted transaction time based on timezone.
- - **Cut_Off_Duration**: Threshold for identifying session breaks.
-
-## Keyword Explanation
-
-### Bet
- Represented by a betslip. Types include:
- - Single (solo)
- - Straight accumulator (AKO)
- - Stepwise accumulator (FALC)
- - System bet (Maxikombi)
-
-In the context of casino gaming, it represents one spin in the game or the amount of money staked in one position.
-
-### Ticket
- A container of a placed bet(s) with all the additional information.
-
-### Session
- A server-side storage of information persisting throughout the user's interaction with the website or web application. Instead of storing large and constantly changing information in the user's browser, only a unique identifier is stored on the client side. Through this identifier, the web application can pair internal data with client-side requests.
-
-### Transaction
- An atomic operation where some information is exchanged and treated as a single unit.
-
-## Conclusion
- The comprehensive process outlined in this document is designed to collect, adjust, and analyze detailed ledger transactions for player sessions. By joining multiple tables, applying date range filters, and adjusting for timezones, the system ensures accurate and relevant transaction data. Identifying periods of inactivity and differentiating between late-night and day play allow for a deeper understanding of player behavior. The final result is a robust dataset that supports detailed analysis and reporting, aiding in the identification of player trends and behaviors for better decision-making and strategy development.
+In summary, the Cut-Off Duration is a critical parameter for accurately identifying and managing player sessions, ensuring that data analysis reflects true player activity and engagement patterns.
