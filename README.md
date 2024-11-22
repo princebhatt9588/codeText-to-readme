@@ -1,23 +1,29 @@
-**Cut-Off Duration** is a predefined time threshold used to identify gaps or breaks in player activity, particularly in their transaction sessions. Here's a detailed explanation of its usage and purpose:
+Yes, the **Central_Transaction_Datetime** is indeed converted into **Local_Transaction_Datetime** during the process. Here is a detailed explanation based on the provided details:
 
-## Cut-Off Duration
+## Conversion of Central Transaction Time to Local Time
 
-### Definition
- - **Cut-Off Duration**: A predefined time threshold used to determine periods of inactivity between transactions.
+### Process Overview
+ 1. **Temporary Table for Ledger Transactions**:
+ - Transaction data is initially collected with the central transaction times (Central_Transaction_Datetime).
 
-### Usage
- - **Inactivity Flag**: Transactions are marked with an inactivity flag if the time difference between consecutive transactions exceeds the Cut-Off Duration. This helps in identifying gaps or breaks in player activity.
- - **Session Identification**: It is used to segment player activities into distinct sessions. If the time gap between two transactions surpasses the Cut-Off Duration, it signifies the end of one session and the beginning of another.
- - **Session Duration Calculation**: In cases where the duration of a session is zero, the Cut-Off Duration might be used to assign a minimum session length, ensuring that even short or inactive sessions are accounted for.
+2. **Timezone Adjustment Table**:
+ - The table `Audit.vwDSTTimeZone` is used specifically for adjusting transaction times to the local time.
 
-### Purpose
- - **Accurate Session Tracking**: By identifying and flagging inactivity periods, the system can accurately track when a player starts and ends a session, even if there are long pauses between transactions.
- - **Behavior Analysis**: It helps in analyzing player behavior by distinguishing between continuous play sessions and breaks. This is particularly useful for understanding patterns in player engagement and activity.
- - **Data Filtering**: Ensures that only relevant transactions within active periods are analyzed, improving the accuracy of reports and insights derived from the data.
+3. **Processed Transactions Table**:
+ - The tables `#F_Ledger_Txn` and `#temp_vwDSTTimeZone` are used to store transactions with local time adjustments.
+ - **Fields Included**: All fields from `#F_Ledger_Txn` plus calculated fields for local transaction date, minute IDs, and cut-off duration.
 
-### Reason for Implementation
- - **Consistency in Data**: Ensures that sessions are consistently defined and tracked, which is crucial for reliable analysis and reporting.
- - **Enhanced Insights**: Provides better insights into player behavior, such as the frequency and duration of their play sessions, which can be used for targeted marketing, responsible gaming measures, and improving user experience.
- - **Operational Efficiency**: Helps in filtering out irrelevant data and focusing on meaningful interactions, which can streamline operations and data processing.
+### Logic for Time Conversion
+ - **Timezone Adjustment**:
+ - The logic involves adjusting the `Central_Transaction_Datetime` to `Local_Transaction_Datetime` using the data from the timezone adjustment table `Audit.vwDSTTimeZone`.
+ - This ensures that transaction times reflect the local time zone of the player, allowing for accurate tracking and analysis of player activity based on their local time.
 
-In summary, the Cut-Off Duration is a critical parameter for accurately identifying and managing player sessions, ensuring that data analysis reflects true player activity and engagement patterns.
+### Conclusion
+ - **Yes**, the central transaction time (Central_Transaction_Datetime) is converted to local time (Local_Transaction_Datetime) as part of the processing logic. This adjustment is crucial for accurate session tracking, identifying inactivity periods, and differentiating between late-night and day play.
+
+## Keyword Explanation
+
+### Transaction
+ - **Transaction**: An atomic operation where some information is exchanged and treated as a single unit.
+
+This time conversion ensures that all subsequent analyses and reports are based on the local transaction times, providing a more accurate and relevant understanding of player behavior and activity patterns.
